@@ -109,7 +109,7 @@ int main(int argc, char** argv) {
 
     // ustanoví spojení
     if (connect(sockfd_global, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
-        perror("ERROR connecting");
+        std::cerr <<"ERROR connecting" <<std::endl;
         exit(1);
     }
 
