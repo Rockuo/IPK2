@@ -5,8 +5,6 @@
 #include <fcntl.h>
 #include <signal.h>
 #include <pthread.h>
-#include <stdio.h>
-#include <stdlib.h>
 
 //Globální proměnné potčbné pro správný chod funkce interuptHandler
 int sockfd_global;
