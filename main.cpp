@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-//Globální proměnné potčbné pro správný chod funkce intListHandler
+//Globální proměnné potčbné pro správný chod funkce interuptHandler
 int sockfd_global;
 pthread_t tid;
 std::string name_global;
@@ -18,12 +18,13 @@ static volatile bool keepRunning = true;
  * Odešle Log out, ukončí sekundární vlákno a komunikaci na socketu
  * @param int none
  */
-void intListHandler(int none/*Nepoužitá poviná proměnná*/) {
+void interuptHandler(int none/*Nepoužitá poviná proměnná*/) {
+    keepRunning = false;
     std::string message = std::string(name_global) + " logged out\r\n";
     send(sockfd_global, message.c_str(), message.length(), 0);
     pthread_cancel(tid);
     shutdown(sockfd_global, 2);
-    exit(0);
+    std::exit(0);
 }
 
 /**
@@ -38,7 +39,7 @@ void* sender(void *keep)
     std::string message = std::string(name_global) + " logged in\r\n";
     ssize_t sendCount = send(sockfd_global, message.c_str(), message.length(), 0);
     if (sendCount < 0)
-        fprintf(stderr, "ERROR: sendto");
+        std::cerr << "ERROR: sendto" std::endl;
 
     while ((bool*)keep) {
         getline(std::cin, message);
@@ -92,14 +93,14 @@ int main(int argc, char** argv) {
 
     if (sockfd_global < 0) {
         std::cerr << "ERROR opening socket" << std::endl;
-        exit(1);
+        std::exit(EXIT_FAILURE);
     }
 
     server = gethostbyname(serverName.c_str());
 
     if (server == NULL) {
         std::cerr << "ERROR, no such host\n" << std::endl;
-        exit(0);
+        std::exit(EXIT_FAILURE);
     }
 
     bzero((char *) &serv_addr, sizeof(serv_addr));
@@ -110,18 +111,18 @@ int main(int argc, char** argv) {
     // ustanoví spojení
     if (connect(sockfd_global, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
         perror("ERROR connecting");
-        exit(1);
+        std::exit(1);
     }
 
     // neblokující spojení
     fcntl(sockfd_global, F_SETFL, O_NONBLOCK);
     // ctr+c handler
-    signal(SIGINT, intListHandler);
+    signal(SIGINT, interuptHandler);
 
     // v druhém vláknu pustí sender
     int err = pthread_create(&tid, NULL, &sender, (void*)&keepRunning);
     if (err != 0)
-        fprintf(stderr, "can't create thread :[%s]", strerror(err));
+        std::cerr << "can't create thread :[" << strerror(err) << "]"<< std::endl;
 
 
     fd_set read_fd_set;
@@ -133,7 +134,7 @@ int main(int argc, char** argv) {
             FD_SET (sockfd_global, &read_fd_set);
             if (select(sockfd_global + 1, &read_fd_set, NULL, NULL, NULL) < 0) { // čeká na další data
                 pthread_cancel(tid);
-                exit(EXIT_FAILURE);
+                std::exit(EXIT_FAILURE);
             }
         } else {
             std::cout << item;
