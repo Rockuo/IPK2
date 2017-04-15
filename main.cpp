@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <signal.h>
 #include <pthread.h>
+#include <stdlib.h>
 
 //Globální proměnné potčbné pro správný chod funkce interuptHandler
 int sockfd_global;
@@ -22,7 +23,7 @@ void interuptHandler(int none/*Nepoužitá poviná proměnná*/) {
     send(sockfd_global, message.c_str(), message.length(), 0);
     pthread_cancel(tid);
     shutdown(sockfd_global, 2);
-    std::exit(0);
+    exit(0);
 }
 
 /**
@@ -37,7 +38,7 @@ void* sender(void *keep)
     std::string message = std::string(name_global) + " logged in\r\n";
     ssize_t sendCount = send(sockfd_global, message.c_str(), message.length(), 0);
     if (sendCount < 0)
-        std::cerr << "ERROR: sendto" std::endl;
+        std::cerr << "ERROR: sendto" << std::endl;
 
     while ((bool*)keep) {
         getline(std::cin, message);
@@ -91,14 +92,14 @@ int main(int argc, char** argv) {
 
     if (sockfd_global < 0) {
         std::cerr << "ERROR opening socket" << std::endl;
-        std::exit(EXIT_FAILURE);
+        exit(1);
     }
 
     server = gethostbyname(serverName.c_str());
 
     if (server == NULL) {
         std::cerr << "ERROR, no such host\n" << std::endl;
-        std::exit(EXIT_FAILURE);
+        exit(0);
     }
 
     bzero((char *) &serv_addr, sizeof(serv_addr));
@@ -109,7 +110,7 @@ int main(int argc, char** argv) {
     // ustanoví spojení
     if (connect(sockfd_global, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
         perror("ERROR connecting");
-        std::exit(1);
+        exit(1);
     }
 
     // neblokující spojení
@@ -132,7 +133,7 @@ int main(int argc, char** argv) {
             FD_SET (sockfd_global, &read_fd_set);
             if (select(sockfd_global + 1, &read_fd_set, NULL, NULL, NULL) < 0) { // čeká na další data
                 pthread_cancel(tid);
-                std::exit(EXIT_FAILURE);
+                exit(EXIT_FAILURE);
             }
         } else {
             std::cout << item;
