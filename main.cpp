@@ -5,6 +5,8 @@
 #include <fcntl.h>
 #include <signal.h>
 #include <pthread.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 //Globální proměnné potčbné pro správný chod funkce intListHandler
 int sockfd_global;
@@ -134,7 +136,7 @@ int main(int argc, char** argv) {
                 exit(EXIT_FAILURE);
             }
         } else {
-            std::cout << item; // tiskne přijatá data
+            std::cout << item;
         }
     }
 }
